@@ -41,7 +41,7 @@ pub fn process_part1(input: &str) -> String {
 
 pub fn process_part2(input: &str) -> String {
     let priority = vec!['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-    let mut backpacks = input.split("\r\n").collect::<Vec<_>>();
+    let backpacks = input.split("\r\n").collect::<Vec<_>>();
     let mut idx = 0;
     let mut total_score = 0;
 
