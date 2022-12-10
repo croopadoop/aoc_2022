@@ -1,98 +1,128 @@
-pub fn process_part1(input: &str) -> String {
-    println!("{}", input);
-    let result = input
-        .lines()
-        .map(|x| {
-            x.split(",")
-                .map(|y| {
-                    y.split("-")
-                        .map(|idx| idx.parse::<u32>().unwrap())
-                        .collect::<Vec<_>>()
-                })
-                .collect::<Vec<_>>()
-        })
-        .collect::<Vec<_>>();
+mod helpers;
 
-    let mut total_overlap = 0;
-
-    for pair in result {
-        let assignment_1: Vec<u32> = (pair[0][0]..=pair[0][1]).collect();
-        let assignment_2: Vec<u32> = (pair[1][0]..=pair[1][1]).collect();
-        let len_1 = assignment_1.len();
-        let len_2 = assignment_2.len();
-        let mut count_overlap = 0;
-
-        if len_1 >= len_2 {
-            for seat in assignment_2 {
-                if assignment_1.contains(&seat) {
-                    count_overlap += 1;
-                }
-            }
-
-            if count_overlap == len_2 {
-                total_overlap += 1;
-            }
-        } else {
-            for seat in assignment_1 {
-                if assignment_2.contains(&seat) {
-                    count_overlap += 1;
-                }
-            }
-
-            if count_overlap == len_1 {
-                total_overlap += 1;
-            }
-        }
-    }
-
-    total_overlap.to_string()
+#[derive(Debug)]
+pub struct Move {
+    count: usize,
+    from_idx: usize,
+    to_idx: usize,
 }
 
-pub fn process_part2(input: &str) -> String {
-    let result = input
-        .lines()
-        .map(|x| {
-            x.split(",")
-                .map(|y| {
-                    y.split("-")
-                        .map(|idx| idx.parse::<u32>().unwrap())
-                        .collect::<Vec<_>>()
-                })
-                .collect::<Vec<_>>()
-        })
-        .collect::<Vec<_>>();
+pub fn process_part1() -> String {
+    let mut stacks = get_crates();
+    let instructions = get_instructions();
 
-    let mut total_overlap = 0;
+    for instruction in instructions {
+        for _ in 1..=instruction.count {
+            let crate_to_move = stacks[instruction.from_idx].pop().unwrap();
+            stacks[instruction.to_idx].push(crate_to_move);
+        }
+    }
 
-    for pair in result {
-        let assignment_1: Vec<u32> = (pair[0][0]..=pair[0][1]).collect();
-        let assignment_2: Vec<u32> = (pair[1][0]..=pair[1][1]).collect();
+    let mut result = String::new();
+    for stack in stacks {
+        result.push(stack.last().unwrap().to_owned());
+    }
 
-        for seat in assignment_1 {
-            if assignment_2.contains(&seat) {
-                total_overlap += 1;
-                break;
+    result
+}
+
+pub fn process_part2() -> String {
+    let mut stacks = get_crates();
+    let instructions = get_instructions();
+
+    for instruction in instructions {
+        let removal_rng = stacks[instruction.from_idx].len() - instruction.count;
+        let crate_to_move: Vec<_> = stacks[instruction.from_idx].drain(removal_rng..).collect();
+        
+        for c in crate_to_move
+        {
+            stacks[instruction.to_idx].push(c);
+        }
+    }
+
+    let mut result = String::new();
+    for stack in stacks {
+        result.push(stack.last().unwrap().to_owned());
+    }
+
+    result
+}
+
+pub fn get_crates() -> Vec<Vec<char>> {
+    let stack_rows = helpers::read_lines("./input_start.txt").unwrap();
+    let mut crate_stacks: Vec<Vec<char>> = Vec::new();
+
+    for stack_row in stack_rows {
+        match stack_row {
+            Ok(row) => {
+                println!("Row to review: {}", row);
+                let mut push_to_idx = 0;
+                let mut next_idx = 1;
+                for (i, c) in row.chars().enumerate() {
+                    if i == next_idx {
+                        if push_to_idx >= crate_stacks.len() {
+                            crate_stacks.push(Vec::new());
+                        }
+                        next_idx += 4;
+                        if c != ' ' {
+                            crate_stacks[push_to_idx].push(c);
+                        }
+                        push_to_idx += 1;
+                    }
+                }
+            }
+            Err(_) => {
+                eprintln!("failed to read line");
             }
         }
     }
 
-    total_overlap.to_string()
+    // Reverse Stacks
+    let mut rev_stacks: Vec<Vec<char>> = Vec::new();
+    for mut stack in crate_stacks {
+        stack.reverse();
+        rev_stacks.push(stack);
+    }
+
+    rev_stacks
+}
+
+pub fn get_instructions() -> Vec<Move> {
+    let mut moves: Vec<Move> = Vec::new();
+    let instructions = helpers::read_lines("./input.txt").unwrap();
+
+    for instruction in instructions {
+        match instruction {
+            Ok(direction) => {
+                let set = direction.split(" ").collect::<Vec<&str>>();
+                moves.push(Move {
+                    count: set[1].parse::<usize>().unwrap(),
+                    from_idx: set[3].parse::<usize>().unwrap() - 1,
+                    to_idx: set[5].parse::<usize>().unwrap() - 1,
+                })
+            }
+            Err(_) => {
+                eprintln!("error reading line");
+            }
+        }
+    }
+
+    moves
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    const INPUT: &str = "2-4,6-8\r\n2-3,4-5\r\n5-7,7-9\r\n2-8,3-7\r\n6-6,4-6\r\n2-6,4-8";
 
     #[test]
     fn process_part1_works() {
-        let result = process_part1(INPUT);
-        assert_eq!(result, "2");
+        let result = process_part1();
+        assert_eq!(result, "CMZ");
     }
 
     #[test]
     fn process_part2_works() {
-        let result = process_part2(INPUT);
-        assert_eq!(result, "4");
+        let result = process_part2();
+        assert_eq!(result, "MCD");
     }
 }
