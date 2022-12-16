@@ -43,3 +43,26 @@ pub fn parse_to_digit_array<P>(path: P) -> Vec<Vec<u32>> where P: AsRef<Path>
 
     u32_lines
 }
+
+pub fn parse_to_char_array<P>(path: P) -> Vec<Vec<char>> where P: AsRef<Path> {
+    let input_lines = read_lines(path).unwrap();
+    let mut char_lines:Vec<Vec<char>> = Vec::new();
+
+    for line in input_lines {
+        let mut char_line: Vec<char> = Vec::new();
+        match line {
+            Ok(row) => {
+                for t in row.chars() {
+                    char_line.push(t);
+                }
+
+                char_lines.push(char_line);
+            }
+            Err(_) => {
+                eprintln!("Error reading line.");
+            }
+        }
+    }
+
+    char_lines
+}
